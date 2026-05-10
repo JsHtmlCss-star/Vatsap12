@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Vatsap Pro Final + Voice</title>
+    <title>Vatsap Pro Audio Fix</title>
     <style>
         * { box-sizing: border-box; }
         body { margin: 0; font-family: sans-serif; background: #e5ddd5; overflow: hidden; }
         #app { max-width: 500px; margin: auto; height: 100vh; display: flex; flex-direction: column; background: #fff; position: relative; }
-        header { background: #075e54; color: white; padding: 12px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        header { background: #075e54; color: white; padding: 12px; display: flex; justify-content: space-between; align-items: center; }
         .screen { display: none; height: calc(100% - 120px); overflow-y: auto; flex-direction: column; }
         .active-screen { display: flex; }
         #msg-area { flex: 1; padding: 15px; background: #efe7dd; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; }
@@ -22,25 +22,26 @@
         input[type="text"] { flex: 1; padding: 10px; border-radius: 20px; border: 1px solid #ddd; outline: none; }
         #call-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(7, 94, 84, 0.95); color: white; display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 2000; }
         #video-ui { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 3000; }
-        #remoteVideo { width: 100%; height: 100%; object-fit: cover; }
-        #localVideo { width: 30%; height: 20%; position: absolute; top: 20px; right: 20px; border: 2px solid #fff; border-radius: 10px; object-fit: cover; }
+        #remoteVideo, #remoteAudio { width: 100%; height: 100%; object-fit: cover; }
+        #localVideo { width: 30%; height: 20%; position: absolute; top: 20px; right: 20px; border: 2px solid #fff; border-radius: 10px; z-index: 3001; }
         .call-btn { padding: 15px 35px; border-radius: 30px; border: none; color: white; font-weight: bold; margin: 10px; cursor: pointer; }
-        #voice-call-bg { display: none; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%; background: #075e54; color: white; }
+        #voice-bg { display: none; width: 100%; height: 100%; background: #075e54; flex-direction: column; align-items: center; justify-content: center; color: white; }
     </style>
 </head>
 <body>
 
 <div id="app">
     <div id="auth-screen" style="padding: 150px 20px; text-align: center;">
-        <h2 style="color:#075e54;">Vatsap Pro</h2>
-        <button onclick="login()" style="background:#128c7e; color:white; padding:15px 40px; border:none; border-radius:25px; font-size:18px;">Google ilə Giriş</button>
+        <h2>Vatsap Pro</h2>
+        <button onclick="login()" style="background:#128c7e; color:white; padding:15px 40px; border:none; border-radius:25px;">Giriş</button>
     </div>
 
     <div id="main-content" style="display:none; height: 100%;">
         <header>
             <div id="h-name">Vatsap</div>
             <div id="call-icons" style="display:none; gap:20px; font-size: 20px;">
-                <span onclick="callChoice()" style="cursor:pointer">📞</span>
+                <span onclick="makeCall('voice')" style="cursor:pointer">📞</span>
+                <span onclick="makeCall('video')" style="cursor:pointer">🎥</span>
             </div>
         </header>
 
@@ -49,21 +50,15 @@
             <div class="input-bar">
                 <label for="file-input" style="cursor:pointer; font-size:24px;">📎</label>
                 <input type="file" id="file-input" style="display:none" onchange="sendFile()">
-                <input type="text" id="m-input" placeholder="Mesaj yazın...">
+                <input type="text" id="m-input" placeholder="Mesaj...">
                 <span onclick="sendMsg()" style="color:#075e54; cursor:pointer; font-size:24px;">➤</span>
             </div>
         </div>
 
-        <div id="friends-screen" class="screen" style="padding: 20px; background: #f0f2f5;">
-            <h3>Dost Əlavə Et</h3>
-            <div style="background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
-                <input type="text" id="f-code" placeholder="Dostun 6 rəqəmli kodu" style="width:100%; padding:12px; margin-bottom:10px; border: 1px solid #ddd; border-radius: 5px;">
-                <button onclick="connect()" style="width:100%; background:#075e54; color:white; padding:12px; border:none; border-radius:5px; font-weight:bold;">Bağlan</button>
-            </div>
-            <div style="margin-top:30px; text-align: center;">
-                <p>Sənin Kodun:</p>
-                <h1 id="my-id-display" style="color:#128c7e; letter-spacing: 5px;">------</h1>
-            </div>
+        <div id="friends-screen" class="screen" style="padding: 20px;">
+            <input type="text" id="f-code" placeholder="Dost kodu" style="width:100%; padding:10px; margin-bottom:10px;">
+            <button onclick="connect()" style="width:100%; background:#075e54; color:white; padding:10px; border:none;">Bağlan</button>
+            <p style="text-align:center; margin-top:20px;">Kodun: <b id="my-id-display"></b></p>
         </div>
 
         <div class="bottom-nav">
@@ -73,8 +68,8 @@
     </div>
 
     <div id="call-overlay">
-        <h2 id="caller-name">Zəng gəlir...</h2>
-        <p id="call-type-label" style="margin-bottom:20px;"></p>
+        <h2 id="caller-name">...</h2>
+        <p id="call-type-txt"></p>
         <div style="display:flex;">
             <button class="call-btn" style="background:#4cd964;" onclick="acceptCall()">Qəbul Et</button>
             <button class="call-btn" style="background:#ff3b30;" onclick="location.reload()">Rədd Et</button>
@@ -82,12 +77,13 @@
     </div>
 
     <div id="video-ui">
-        <div id="voice-call-bg">
-            <div style="font-size: 80px; margin-bottom: 20px;">👤</div>
-            <h2 id="voice-caller-name">Səsli Zəng</h2>
-            <p>00:00</p>
+        <div id="voice-bg">
+            <div style="font-size: 100px;">👤</div>
+            <h2 id="v-name-display">Səsli Zəng</h2>
+            <p>Danışılır...</p>
         </div>
         <video id="remoteVideo" autoplay playsinline></video>
+        <audio id="remoteAudio" autoplay playsinline></audio>
         <video id="localVideo" autoplay playsinline muted></video>
         <button onclick="location.reload()" style="position:absolute; bottom:50px; left:50%; transform:translateX(-50%); background:red; color:white; border:none; padding:15px 40px; border-radius:30px; font-weight:bold; z-index:4000;">Bitir</button>
     </div>
@@ -110,7 +106,7 @@
     const db = getDatabase(fb);
     const provider = new GoogleAuthProvider();
 
-    let user, myCode, targetCode, pc, localStream, incomingData, callType = 'video';
+    let user, myCode, targetCode, pc, localStream, incomingData, currentMode;
     let startTime = Date.now();
 
     window.login = () => signInWithPopup(auth, provider);
@@ -128,7 +124,7 @@
                 if (data && data.t > startTime && !pc) {
                     incomingData = data;
                     document.getElementById('caller-name').innerText = data.n;
-                    document.getElementById('call-type-label').innerText = data.type === 'voice' ? 'Səsli zəng edir...' : 'Video zəng edir...';
+                    document.getElementById('call-type-txt').innerText = data.mode === 'voice' ? 'Səsli zəng gəlir...' : 'Video zəng gəlir...';
                     document.getElementById('call-overlay').style.display = 'flex';
                 }
             });
@@ -145,7 +141,7 @@
     window.connect = async () => {
         targetCode = document.getElementById('f-code').value.trim();
         const res = await get(ref(db, 'users/' + targetCode));
-        if(!res.exists()) return alert("İstifadəçi tapılmadı!");
+        if(!res.exists()) return alert("Tapılmadı!");
         const chatId = [myCode, targetCode].sort().join("_");
         document.getElementById('call-icons').style.display = 'flex';
         document.getElementById('h-name').innerText = res.val().n;
@@ -153,8 +149,7 @@
             const area = document.getElementById('msg-area'); area.innerHTML = "";
             s.forEach(c => {
                 const d = c.val();
-                let content = d.m;
-                if(d.type === 'file') content = `📂 <a href="${d.fileData}" download="${d.m}" style="color:#075e54; font-weight:bold;">Fayl: ${d.m}</a>`;
+                let content = d.type === 'file' ? `📂 <a href="${d.fileData}" download="${d.m}">Fayl: ${d.m}</a>` : d.m;
                 area.innerHTML += `<div class="msg ${d.s === user.uid ? 'sent' : 'received'}"><b>${d.n}:</b><br>${content}</div>`;
             });
             area.scrollTop = area.scrollHeight;
@@ -164,60 +159,59 @@
 
     window.sendMsg = () => {
         const m = document.getElementById('m-input').value.trim();
-        if(!m || !targetCode) return;
-        const chatId = [myCode, targetCode].sort().join("_");
-        push(ref(db, 'chats/' + chatId), { s: user.uid, n: user.displayName, m, type: 'text' });
+        if(m && targetCode) push(ref(db, 'chats/' + [myCode, targetCode].sort().join("_")), { s: user.uid, n: user.displayName, m, type: 'text' });
         document.getElementById('m-input').value = "";
     };
 
     window.sendFile = () => {
         const file = document.getElementById('file-input').files[0];
-        if(!file || !targetCode) return;
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const chatId = [myCode, targetCode].sort().join("_");
-            push(ref(db, 'chats/' + chatId), { s: user.uid, n: user.displayName, m: file.name, type: 'file', fileData: e.target.result });
-        };
-        reader.readAsDataURL(file);
+        if(file && targetCode) {
+            const reader = new FileReader();
+            reader.onload = (e) => push(ref(db, 'chats/' + [myCode, targetCode].sort().join("_")), { s: user.uid, n: user.displayName, m: file.name, type: 'file', fileData: e.target.result });
+            reader.readAsDataURL(file);
+        }
     };
 
-    window.callChoice = () => {
-        const type = confirm("Video zəng üçün OK, Səsli zəng üçün Cancel basın.") ? 'video' : 'voice';
-        startCall(type);
-    };
-
-    async function setupRTC(remote, type) {
-        callType = type;
-        pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
-        localStream = await navigator.mediaDevices.getUserMedia({ video: type === 'video', audio: true });
+    // --- AUDIO/VIDEO FIX ---
+    async function startMedia(mode) {
+        currentMode = mode;
+        const constraints = { audio: true, video: mode === 'video' };
+        localStream = await navigator.mediaDevices.getUserMedia(constraints);
         
-        if(type === 'video') {
+        document.getElementById('video-ui').style.display = 'block';
+        if(mode === 'video') {
             document.getElementById('localVideo').srcObject = localStream;
-            document.getElementById('voice-call-bg').style.display = 'none';
+            document.getElementById('voice-bg').style.display = 'none';
+            document.getElementById('remoteVideo').style.display = 'block';
         } else {
-            document.getElementById('voice-call-bg').style.display = 'flex';
+            document.getElementById('voice-bg').style.display = 'flex';
             document.getElementById('localVideo').style.display = 'none';
             document.getElementById('remoteVideo').style.display = 'none';
         }
 
+        pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
         localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
-        pc.ontrack = (e) => { if(type === 'video') document.getElementById('remoteVideo').srcObject = e.streams[0]; };
-        pc.onicecandidate = (e) => e.candidate && push(ref(db, `calls/${remote}/ice`), e.candidate.toJSON());
+        
+        pc.ontrack = (e) => {
+            const targetEl = mode === 'video' ? document.getElementById('remoteVideo') : document.getElementById('remoteAudio');
+            targetEl.srcObject = e.streams[0];
+        };
+
+        pc.onicecandidate = (e) => e.candidate && push(ref(db, `calls/${incomingData?.from || targetCode}/ice`), e.candidate.toJSON());
         onChildAdded(ref(db, `calls/${myCode}/ice`), (s) => s.exists() && pc.addIceCandidate(new RTCIceCandidate(s.val())));
-        document.getElementById('video-ui').style.display = 'block';
     }
 
-    window.startCall = async (type) => {
-        await setupRTC(targetCode, type);
+    window.makeCall = async (mode) => {
+        await startMedia(mode);
         const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
-        await set(ref(db, `calls/${targetCode}/offer`), { sdp: offer.sdp, type: offer.type, n: user.displayName, t: Date.now(), from: myCode, callMode: type });
+        await set(ref(db, `calls/${targetCode}/offer`), { sdp: offer.sdp, type: offer.type, n: user.displayName, t: Date.now(), from: myCode, mode: mode });
         onValue(ref(db, `calls/${myCode}/answer`), (s) => s.exists() && pc.setRemoteDescription(new RTCSessionDescription(s.val())));
     };
 
     window.acceptCall = async () => {
         document.getElementById('call-overlay').style.display = 'none';
-        await setupRTC(incomingData.from, incomingData.callMode);
+        await startMedia(incomingData.mode);
         await pc.setRemoteDescription(new RTCSessionDescription(incomingData));
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
