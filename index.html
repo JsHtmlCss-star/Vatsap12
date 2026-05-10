@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Vatsap Pro Ultra Final</title>
+    <title>Vatsap Pro Ultra Pro-Fix</title>
     <style>
         :root { --main: #075e54; --light: #dcf8c6; --bg: #e5ddd5; --text: #000; --header: #075e54; }
         .dark { --main: #232d36; --light: #054740; --bg: #101d25; --text: #fff; --header: #232d36; }
@@ -16,7 +16,7 @@
         .status-info { font-size: 11px; opacity: 0.8; }
 
         #msg-area { flex: 1; padding: 15px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; padding-bottom: 80px; }
-        .msg { padding: 8px 12px; border-radius: 8px; max-width: 75%; font-size: 14px; position: relative; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        .msg { padding: 8px 12px; border-radius: 8px; max-width: 80%; font-size: 14px; position: relative; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
         .sent { align-self: flex-end; background: var(--light); color: #000; }
         .received { align-self: flex-start; background: white; color: #000; }
         .dark .received { background: #262d31; color: white; }
@@ -25,9 +25,9 @@
         .dark .bottom-nav { background: #054740; border-top: 1px solid #232d36; }
         .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; font-size: 12px; }
 
-        .input-bar { position: absolute; bottom: 60px; width: 100%; padding: 10px; background: #f0f0f0; display: flex; gap: 8px; align-items: center; border-top: 1px solid #ddd; }
+        .input-bar { position: absolute; bottom: 60px; width: 100%; padding: 10px; background: #f0f0f0; display: flex; gap: 8px; align-items: center; }
         .dark .input-bar { background: #1e2428; border-top: 1px solid #333; }
-        input[type="text"] { flex: 1; padding: 10px; border-radius: 20px; border: none; outline: none; background: white; }
+        input[type="text"] { flex: 1; padding: 10px; border-radius: 20px; border: none; outline: none; }
         .dark input[type="text"] { background: #2a2f32; color: white; }
 
         #video-ui { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 3000; flex-direction: column; }
@@ -41,7 +41,7 @@
 <div id="app">
     <div id="auth-screen" style="padding: 100px 20px; text-align: center;">
         <h1 style="color: #075e54;">Vatsap Ultra</h1>
-        <button onclick="login()" style="padding:15px 40px; border-radius:25px; border:none; background: #128c7e; color:white; font-size: 18px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">Google ilə Giriş</button>
+        <button onclick="login()" style="padding:15px 40px; border-radius:25px; border:none; background: #128c7e; color:white; font-size: 18px; cursor: pointer;">Google ilə Giriş</button>
     </div>
 
     <div id="main-content" style="display:none; height:100%;">
@@ -65,19 +65,19 @@
                 <label for="file-input" style="cursor:pointer; font-size: 22px;">📎</label>
                 <input type="file" id="file-input" style="display:none" onchange="sendFile()">
                 <input type="text" id="m-input" placeholder="Mesaj..." oninput="sendTyping()">
-                <span id="voice-btn" onmousedown="startVoice()" onmouseup="stopVoice()" ontouchstart="startVoice()" ontouchend="stopVoice()" style="font-size:22px; cursor:pointer;">🎤</span>
+                <span id="voice-btn" 
+                      onmousedown="startVoice()" onmouseup="stopVoice()" 
+                      ontouchstart="startVoice()" ontouchend="stopVoice()" 
+                      style="font-size:22px; cursor:pointer; user-select: none;">🎤</span>
                 <span onclick="sendMsg()" style="font-size:22px; cursor:pointer; color: #075e54;">➤</span>
             </div>
         </div>
 
         <div id="friends-screen" class="screen" style="display:none; padding:20px;">
-            <h3>Dostunun Kodunu Yaz</h3>
-            <input type="text" id="f-code" placeholder="6 rəqəmli kod" style="width:100%; padding:12px; border: 1px solid #ddd; border-radius: 8px;">
-            <button onclick="connect()" style="width:100%; margin-top:10px; background:#075e54; color:white; padding:12px; border:none; border-radius: 8px; font-weight: bold;">Bağlan</button>
-            <div style="margin-top: 30px; text-align: center; background: white; padding: 20px; border-radius: 10px;">
-                <p>Sənin Şəxsi Kodun:</p>
-                <h2 id="my-id-display" style="color: #075e54; letter-spacing: 3px;"></h2>
-            </div>
+            <h3>Dostun Kodu</h3>
+            <input type="text" id="f-code" placeholder="6 rəqəmli kod" style="width:100%; padding:12px; border-radius: 8px; border:1px solid #ddd;">
+            <button onclick="connect()" style="width:100%; margin-top:10px; background:#075e54; color:white; padding:12px; border:none; border-radius: 8px;">Bağlan</button>
+            <p style="text-align:center; margin-top:20px;">Kodun: <b id="my-id-display" style="font-size: 20px; color:#075e54;"></b></p>
         </div>
 
         <div class="bottom-nav">
@@ -95,7 +95,7 @@
         <video id="remoteVideo" autoplay playsinline></video>
         <audio id="remoteAudio" autoplay playsinline></audio>
         <video id="localVideo" autoplay playsinline muted></video>
-        <button onclick="endCall()" style="position:absolute; bottom:50px; left:50%; transform:translateX(-50%); background:red; color:white; padding:15px 45px; border-radius:30px; border:none; font-weight: bold; cursor: pointer; z-index: 4000; box-shadow: 0 5px 15px rgba(0,0,0,0.3);">Bitir</button>
+        <button onclick="endCall()" style="position:absolute; bottom:50px; left:50%; transform:translateX(-50%); background:red; color:white; padding:15px 45px; border-radius:30px; border:none; font-weight: bold; cursor: pointer;">Bitir</button>
     </div>
 </div>
 
@@ -129,13 +129,10 @@
             
             onValue(ref(db, `calls/${myCode}/offer`), (s) => {
                 if (s.exists()) {
-                    const callData = s.val();
-                    if (callData.t > sessionStartTime && !pc) {
-                        if (confirm(callData.n + " zəng edir...")) {
-                            acceptCall(callData);
-                        } else {
-                            remove(ref(db, `calls/${myCode}`));
-                        }
+                    const d = s.val();
+                    if (d.t > sessionStartTime && !pc) {
+                        if (confirm(d.n + " zəng edir...")) acceptCall(d);
+                        else remove(ref(db, `calls/${myCode}`));
                     }
                 }
             });
@@ -157,7 +154,7 @@
     window.connect = async () => {
         targetCode = document.getElementById('f-code').value.trim();
         const res = await get(ref(db, `users/${targetCode}`));
-        if(!res.exists()) return alert("Dost kodu tapılmadı!");
+        if(!res.exists()) return alert("Dost tapılmadı!");
         document.getElementById('h-name').innerText = res.val().n;
         document.getElementById('call-icons').style.display = 'flex';
         
@@ -171,8 +168,8 @@
             s.forEach(c => {
                 const d = c.val();
                 let m = d.m;
-                if(d.type === 'file') m = `📂 <a href="${d.fileData}" download="${d.m}" style="color: #075e54; font-weight: bold;">Fayl: ${d.m}</a>`;
-                if(d.type === 'voice') m = `<audio controls src="${d.fileData}" style="width: 220px;"></audio>`;
+                if(d.type === 'file') m = `📂 <a href="${d.fileData}" download="${d.m}" style="color:blue;">${d.m}</a>`;
+                if(d.type === 'voice') m = `<audio controls src="${d.fileData}" style="width:200px;"></audio>`;
                 area.innerHTML += `<div class="msg ${d.s === user.uid ? 'sent' : 'received'}" onclick="deleteMsg('${c.key}')"><b>${d.n}:</b><br>${m}</div>`;
             });
             area.scrollTop = area.scrollHeight;
@@ -181,9 +178,7 @@
     };
 
     window.deleteMsg = (key) => {
-        if(confirm("Bu mesajı hər kəs üçün silmək istəyirsən?")) {
-            remove(ref(db, `chats/${[myCode, targetCode].sort().join("_")}/${key}`));
-        }
+        if(confirm("Silinsin?")) remove(ref(db, `chats/${[myCode, targetCode].sort().join("_")}/${key}`));
     };
 
     window.sendMsg = () => {
@@ -192,39 +187,43 @@
         document.getElementById('m-input').value = "";
     };
 
-    // --- TƏKMİLLƏŞDİRİLMİŞ SƏS YAZMA ---
+    // --- SƏS YAZMA FİX VERSİYA ---
     window.startVoice = async () => {
         try {
-            chunks = []; // Hər dəfə tam sıfırlama
+            chunks = [];
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            mediaRecorder = new MediaRecorder(stream);
+            
+            // Format yoxlanışı
+            const options = { mimeType: 'audio/webm;codecs=opus' };
+            if (!MediaRecorder.isTypeSupported(options.mimeType)) options.mimeType = 'audio/mp4';
+
+            mediaRecorder = new MediaRecorder(stream, options);
             
             mediaRecorder.ondataavailable = (e) => {
-                if (e.data.size > 0) chunks.push(e.data);
+                if (e.data && e.data.size > 0) chunks.push(e.data);
             };
 
             mediaRecorder.onstop = () => {
-                const blob = new Blob(chunks, { type: 'audio/ogg; codecs=opus' });
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    if(targetCode) {
-                        push(ref(db, `chats/${[myCode, targetCode].sort().join("_")}`), { 
-                            s: user.uid, n: user.displayName, m: 'Səsli mesaj', 
-                            type: 'voice', fileData: e.target.result 
-                        });
-                    }
-                };
-                reader.readAsDataURL(blob);
-                // Mikrafonu tamamilə söndürürük ki, arxa planda köhnə səs qalmasın
-                stream.getTracks().forEach(track => track.stop());
+                if (chunks.length > 0) {
+                    const blob = new Blob(chunks, { type: mediaRecorder.mimeType });
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        if(targetCode && e.target.result.length > 200) {
+                            push(ref(db, `chats/${[myCode, targetCode].sort().join("_")}`), { 
+                                s: user.uid, n: user.displayName, m: 'Səsli mesaj', type: 'voice', fileData: e.target.result 
+                            });
+                        }
+                    };
+                    reader.readAsDataURL(blob);
+                }
+                stream.getTracks().forEach(t => t.stop());
             };
 
-            mediaRecorder.start();
+            // 1000ms timeslice səs kəsilməsinin qarşısını alır
+            mediaRecorder.start(1000); 
             document.getElementById('voice-btn').style.color = "red";
             document.getElementById('voice-btn').style.transform = "scale(1.3)";
-        } catch (err) {
-            alert("Mikrofona icazə verin!");
-        }
+        } catch (err) { alert("Mikrafon xətası!"); }
     };
 
     window.stopVoice = () => {
@@ -239,9 +238,7 @@
         const file = document.getElementById('file-input').files[0];
         if(!file) return;
         const reader = new FileReader();
-        reader.onload = (e) => {
-            push(ref(db, `chats/${[myCode, targetCode].sort().join("_")}`), { s: user.uid, n: user.displayName, m: file.name, type: 'file', fileData: e.target.result });
-        };
+        reader.onload = (e) => push(ref(db, `chats/${[myCode, targetCode].sort().join("_")}`), { s: user.uid, n: user.displayName, m: file.name, type: 'file', fileData: e.target.result });
         reader.readAsDataURL(file);
     };
 
@@ -250,17 +247,14 @@
         pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
         localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: mode === 'video' });
         document.getElementById('video-ui').style.display = 'flex';
-        
         if(mode === 'video') {
             document.getElementById('localVideo').srcObject = localStream;
             document.getElementById('voice-call-ui').style.display = 'none';
-            document.getElementById('remoteVideo').style.display = 'block';
         } else {
             document.getElementById('voice-call-ui').style.display = 'flex';
-            document.getElementById('remoteVideo').style.display = 'none';
             document.getElementById('localVideo').style.display = 'none';
+            document.getElementById('remoteVideo').style.display = 'none';
         }
-
         localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
         pc.ontrack = (e) => {
             const el = mode === 'video' ? document.getElementById('remoteVideo') : document.getElementById('remoteAudio');
