@@ -3,42 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Vatsap Pro Video Fix</title>
+    <title>Vatsap Pro Final</title>
     <style>
         * { box-sizing: border-box; }
         body { margin: 0; font-family: sans-serif; background: #e5ddd5; overflow: hidden; }
         #app { max-width: 500px; margin: auto; height: 100vh; display: flex; flex-direction: column; background: #fff; position: relative; }
-        header { background: #075e54; color: white; padding: 12px; display: flex; justify-content: space-between; align-items: center; }
-        #msg-area { flex: 1; overflow-y: auto; padding: 15px; background: #efe7dd; display: flex; flex-direction: column; gap: 10px; padding-bottom: 70px; }
-        .msg { padding: 10px; border-radius: 8px; max-width: 80%; font-size: 14px; box-shadow: 0 1px 1px rgba(0,0,0,0.1); }
+        
+        /* Header */
+        header { background: #075e54; color: white; padding: 12px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        
+        /* Screens */
+        .screen { display: none; height: calc(100% - 120px); overflow-y: auto; flex-direction: column; }
+        .active-screen { display: flex; }
+
+        /* Chat Area */
+        #msg-area { flex: 1; padding: 15px; background: #efe7dd; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; }
+        .msg { padding: 10px; border-radius: 8px; max-width: 80%; font-size: 14px; box-shadow: 0 1px 1px rgba(0,0,0,0.1); word-wrap: break-word; }
         .sent { align-self: flex-end; background: #dcf8c6; }
         .received { align-self: flex-start; background: #fff; }
-        .bottom-nav { position: absolute; bottom: 0; width: 100%; height: 60px; background: #f6f6f6; display: flex; border-top: 1px solid #ddd; z-index: 100; }
-        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; color: #51585c; font-size: 12px; }
-        .nav-item.active { color: #075e54; border-top: 3px solid #075e54; }
-        .screen { display: none; flex-direction: column; height: calc(100% - 120px); }
-        .active-screen { display: flex; }
+        
+        /* Bottom Nav */
+        .bottom-nav { position: absolute; bottom: 0; width: 100%; height: 60px; background: #f6f6f6; display: flex; border-top: 1px solid #ddd; }
+        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; color: #51585c; font-size: 12px; transition: 0.3s; }
+        .nav-item.active { color: #075e54; border-top: 3px solid #075e54; background: #fff; }
+
+        /* Input Bar */
+        .input-bar { position: absolute; bottom: 60px; width: 100%; padding: 10px; background: #f0f0f0; display: flex; gap: 8px; align-items: center; border-top: 1px solid #ddd; }
+        input[type="text"] { flex: 1; padding: 10px; border-radius: 20px; border: 1px solid #ddd; outline: none; }
+
+        /* Overlay Screens */
         #call-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(7, 94, 84, 0.95); color: white; display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 2000; }
-        .call-btn { padding: 15px 30px; border-radius: 30px; border: none; color: white; font-weight: bold; margin: 10px; cursor: pointer; }
-        .input-bar { padding: 10px; background: #f0f0f0; display: flex; gap: 8px; align-items: center; position: absolute; bottom: 60px; width: 100%; }
-        input[type="text"] { flex: 1; padding: 10px; border-radius: 20px; border: 1px solid #ddd; }
         #video-ui { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 3000; }
         #remoteVideo { width: 100%; height: 100%; object-fit: cover; }
         #localVideo { width: 30%; height: 20%; position: absolute; top: 20px; right: 20px; border: 2px solid #fff; border-radius: 10px; object-fit: cover; }
+        .call-btn { padding: 15px 35px; border-radius: 30px; border: none; color: white; font-weight: bold; margin: 10px; cursor: pointer; }
     </style>
 </head>
 <body>
 
 <div id="app">
     <div id="auth-screen" style="padding: 150px 20px; text-align: center;">
-        <h2>Vatsap Pro</h2>
-        <button onclick="login()" style="background:#128c7e; color:white; padding:15px 40px; border:none; border-radius:25px;">Giriş</button>
+        <h2 style="color:#075e54;">Vatsap Pro</h2>
+        <button onclick="login()" style="background:#128c7e; color:white; padding:15px 40px; border:none; border-radius:25px; font-size:18px;">Google ilə Giriş</button>
     </div>
 
     <div id="main-content" style="display:none; height: 100%;">
         <header>
             <div id="h-name">Vatsap</div>
-            <div style="display:flex; gap:20px; font-size: 20px;">
+            <div id="call-icons" style="display:none; gap:20px; font-size: 20px;">
                 <span onclick="startCall()" style="cursor:pointer">🎥</span>
             </div>
         </header>
@@ -53,11 +65,16 @@
             </div>
         </div>
 
-        <div id="friends-screen" class="screen" style="padding: 20px;">
+        <div id="friends-screen" class="screen" style="padding: 20px; background: #f0f2f5;">
             <h3>Dost Əlavə Et</h3>
-            <input type="text" id="f-code" placeholder="Dost kodu..." style="width:100%; padding:12px; margin-bottom:10px;">
-            <button onclick="connect()" style="width:100%; background:#075e54; color:white; padding:12px; border:none; border-radius:5px;">Bağlan</button>
-            <p style="margin-top:20px;">Sizin kodunuz: <b id="my-id-display"></b></p>
+            <div style="background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                <input type="text" id="f-code" placeholder="Dostun 6 rəqəmli kodu" style="width:100%; padding:12px; margin-bottom:10px; border: 1px solid #ddd; border-radius: 5px;">
+                <button onclick="connect()" style="width:100%; background:#075e54; color:white; padding:12px; border:none; border-radius:5px; font-weight:bold;">Bağlan və Söhbətə Başla</button>
+            </div>
+            <div style="margin-top:30px; text-align: center;">
+                <p>Sənin Kodun:</p>
+                <h1 id="my-id-display" style="color:#128c7e; letter-spacing: 5px;">------</h1>
+            </div>
         </div>
 
         <div class="bottom-nav">
@@ -77,14 +94,14 @@
     <div id="video-ui">
         <video id="remoteVideo" autoplay playsinline></video>
         <video id="localVideo" autoplay playsinline muted></video>
-        <button onclick="location.reload()" style="position:absolute; bottom:50px; left:50%; transform:translateX(-50%); background:red; color:white; border:none; padding:15px 40px; border-radius:30px;">Bitir</button>
+        <button onclick="location.reload()" style="position:absolute; bottom:50px; left:50%; transform:translateX(-50%); background:red; color:white; border:none; padding:15px 40px; border-radius:30px; font-weight:bold;">Zəngi Bitir</button>
     </div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { getDatabase, ref, set, push, onValue, get, remove, onChildAdded } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    import { getDatabase, ref, set, push, onValue, get, onChildAdded } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
     const fb = initializeApp({
         apiKey: "AIzaSyCgzvEi_a1v0SjdltQwHpN4rmyNk_1CivE",
@@ -131,73 +148,64 @@
 
     window.connect = async () => {
         targetCode = document.getElementById('f-code').value.trim();
-        if(!targetCode) return;
-        chatId = [myCode, targetCode].sort().join("_");
+        if(!targetCode || targetCode === myCode) return alert("Düzgün kod yazın!");
+        
+        const res = await get(ref(db, 'users/' + targetCode));
+        if(!res.exists()) return alert("Bu kodlu istifadəçi tapılmadı!");
+
+        const chatId = [myCode, targetCode].sort().join("_");
+        document.getElementById('call-icons').style.display = 'flex';
+        document.getElementById('h-name').innerText = res.val().n;
+
         onValue(ref(db, 'chats/' + chatId), (s) => {
             const area = document.getElementById('msg-area'); area.innerHTML = "";
             s.forEach(c => {
                 const d = c.val();
-                if(d.type === 'file') {
-                    area.innerHTML += `<div class="msg ${d.s === user.uid ? 'sent' : 'received'}"><b>${d.n}:</b><br>📂 Fayl: <a href="${d.fileData}" download="${d.m}" style="color:blue">Yüklə: ${d.m}</a></div>`;
-                } else {
-                    area.innerHTML += `<div class="msg ${d.s === user.uid ? 'sent' : 'received'}"><b>${d.n}:</b><br>${d.m}</div>`;
-                }
+                let content = d.m;
+                if(d.type === 'file') content = `📂 <a href="${d.fileData}" download="${d.m}" style="color:#075e54; font-weight:bold;">Faylı Yüklə: ${d.m}</a>`;
+                area.innerHTML += `<div class="msg ${d.s === user.uid ? 'sent' : 'received'}"><b>${d.n}:</b><br>${content}</div>`;
             });
             area.scrollTop = area.scrollHeight;
         });
-        alert("Bağlanıldı!");
         showScreen('chat', document.querySelector('.nav-item'));
     };
 
     window.sendMsg = () => {
         const m = document.getElementById('m-input').value.trim();
-        if(m && chatId) push(ref(db, 'chats/' + chatId), { s: user.uid, n: user.displayName, m, type: 'text' });
+        if(!m || !targetCode) return;
+        const chatId = [myCode, targetCode].sort().join("_");
+        push(ref(db, 'chats/' + chatId), { s: user.uid, n: user.displayName, m, type: 'text' });
         document.getElementById('m-input').value = "";
     };
 
     window.sendFile = () => {
         const file = document.getElementById('file-input').files[0];
-        if(!file || !chatId) return;
+        if(!file || !targetCode) return;
         const reader = new FileReader();
         reader.onload = (e) => {
+            const chatId = [myCode, targetCode].sort().join("_");
             push(ref(db, 'chats/' + chatId), { s: user.uid, n: user.displayName, m: file.name, type: 'file', fileData: e.target.result });
         };
         reader.readAsDataURL(file);
     };
 
-    // --- WEBRTC FIX ---
-    async function setupRTC(remoteCode) {
-        pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }] });
+    async function setupRTC(remote) {
+        pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
         localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
         document.getElementById('localVideo').srcObject = localStream;
         localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
-        
-        pc.ontrack = (e) => {
-            if (e.streams[0]) document.getElementById('remoteVideo').srcObject = e.streams[0];
-        };
-
-        pc.onicecandidate = (e) => {
-            if (e.candidate) push(ref(db, `calls/${remoteCode}/ice`), e.candidate.toJSON());
-        };
-
-        onChildAdded(ref(db, `calls/${myCode}/ice`), (s) => {
-            if (s.exists()) pc.addIceCandidate(new RTCIceCandidate(s.val()));
-        });
-
+        pc.ontrack = (e) => document.getElementById('remoteVideo').srcObject = e.streams[0];
+        pc.onicecandidate = (e) => e.candidate && push(ref(db, `calls/${remote}/ice`), e.candidate.toJSON());
+        onChildAdded(ref(db, `calls/${myCode}/ice`), (s) => s.exists() && pc.addIceCandidate(new RTCIceCandidate(s.val())));
         document.getElementById('video-ui').style.display = 'block';
     }
 
     window.startCall = async () => {
-        if(!targetCode) targetCode = document.getElementById('f-code').value.trim();
-        if(!targetCode) return alert("Əvvəlcə dost kodunu yazın və Bağlan düyməsinə basın!");
         await setupRTC(targetCode);
         const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
         await set(ref(db, `calls/${targetCode}/offer`), { sdp: offer.sdp, type: offer.type, n: user.displayName, t: Date.now(), from: myCode });
-        
-        onValue(ref(db, `calls/${myCode}/answer`), (s) => {
-            if (s.exists() && pc.signalingState !== "stable") pc.setRemoteDescription(new RTCSessionDescription(s.val()));
-        });
+        onValue(ref(db, `calls/${myCode}/answer`), (s) => s.exists() && pc.setRemoteDescription(new RTCSessionDescription(s.val())));
     };
 
     window.acceptCall = async () => {
