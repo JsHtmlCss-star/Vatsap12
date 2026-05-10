@@ -3,53 +3,95 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Vatsap G14 Pro</title>
+    <title>Vatsap Pro v2</title>
     <style>
         * { box-sizing: border-box; }
         body { margin: 0; font-family: sans-serif; background: #e5ddd5; overflow: hidden; }
         #app { max-width: 500px; margin: auto; height: 100vh; display: flex; flex-direction: column; background: #fff; position: relative; }
+        
+        /* Header */
         header { background: #075e54; color: white; padding: 12px; display: flex; justify-content: space-between; align-items: center; }
-        #msg-area { flex: 1; overflow-y: auto; padding: 15px; background: #efe7dd; display: flex; flex-direction: column; gap: 10px; }
-        .msg { padding: 10px; border-radius: 8px; max-width: 80%; font-size: 14px; box-shadow: 0 1px 1px rgba(0,0,0,0.1); }
+        
+        /* Chat Area */
+        #msg-area { flex: 1; overflow-y: auto; padding: 15px; background: #efe7dd; display: flex; flex-direction: column; gap: 10px; padding-bottom: 70px; }
+        .msg { padding: 10px; border-radius: 8px; max-width: 80%; font-size: 14px; box-shadow: 0 1px 1px rgba(0,0,0,0.1); position: relative; }
         .sent { align-self: flex-end; background: #dcf8c6; }
         .received { align-self: flex-start; background: #fff; }
-        #video-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; display: none; z-index: 999; }
-        #remoteVideo { width: 100%; height: 100%; object-fit: cover; }
-        #localVideo { width: 30%; height: 20%; position: absolute; top: 20px; right: 20px; border: 2px solid #fff; z-index: 1000; border-radius: 10px; }
-        .controls { position: absolute; bottom: 40px; width: 100%; display: flex; justify-content: center; z-index: 1001; }
-        .hang { background: #ff3b30; color: white; border: none; padding: 15px 35px; border-radius: 30px; cursor: pointer; font-weight: bold; }
-        .input-bar { padding: 10px; background: #f0f0f0; display: flex; gap: 8px; align-items: center; }
-        input[type="text"] { flex: 1; padding: 12px; border-radius: 20px; border: none; outline: none; }
+        .file-link { color: #075e54; text-decoration: none; font-weight: bold; display: block; margin-top: 5px; border: 1px solid #ddd; padding: 5px; border-radius: 5px; background: #f9f9f9; }
+
+        /* Bottom Menu (Dostlar/Mesajlar) */
+        .bottom-nav { position: absolute; bottom: 0; width: 100%; height: 60%; background: #f6f6f6; display: flex; border-top: 1px solid #ddd; z-index: 100; height: 60px; }
+        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; color: #51585c; font-size: 12px; }
+        .nav-item.active { color: #075e54; border-top: 3px solid #075e54; }
+
+        /* Screens */
+        .screen { display: none; flex-direction: column; height: calc(100% - 120px); }
+        .active-screen { display: flex; }
+
+        /* Call Overlay */
+        #call-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(7, 94, 84, 0.9); color: white; display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 2000; }
+        .call-btn { padding: 15px 30px; border-radius: 30px; border: none; color: white; font-weight: bold; margin: 10px; cursor: pointer; }
+
+        /* Input Bar */
+        .input-bar { padding: 10px; background: #f0f0f0; display: flex; gap: 8px; align-items: center; border-top: 1px solid #ddd; position: absolute; bottom: 60px; width: 100%; }
+        input[type="text"] { flex: 1; padding: 10px; border-radius: 20px; border: 1px solid #ddd; outline: none; }
+        #file-input { display: none; }
     </style>
 </head>
 <body>
 
 <div id="app">
     <div id="auth-screen" style="padding: 150px 20px; text-align: center;">
-        <button onclick="login()" style="background:#128c7e; color:white; padding:15px 40px; border:none; border-radius:25px; font-size:18px;">Giriş Et</button>
+        <h2>Vatsap Pro</h2>
+        <button onclick="login()" style="background:#128c7e; color:white; padding:15px 40px; border:none; border-radius:25px;">Giriş</button>
     </div>
 
-    <div id="chat-screen" style="display:none; flex-direction: column; height: 100%;">
+    <div id="main-content" style="display:none; height: 100%;">
         <header>
-            <div id="h-name">Yüklənir...</div>
-            <div onclick="startCall()" style="cursor:pointer; font-size: 20px;">🎥</div>
+            <div id="h-name">Vatsap</div>
+            <div style="display:flex; gap:20px; font-size: 20px;">
+                <span onclick="startCall('voice')" style="cursor:pointer">📞</span>
+                <span onclick="startCall('video')" style="cursor:pointer">🎥</span>
+            </div>
         </header>
-        <div style="padding:8px; background:#f0f0f0; display:flex; gap:5px; border-bottom:1px solid #ddd;">
-            <input type="text" id="f-code" placeholder="Dost kodu">
-            <button onclick="connect()" style="background:#075e54; color:white; border:none; padding:5px 15px; border-radius:5px;">Bağlan</button>
+
+        <div id="chat-screen" class="screen active-screen">
+            <div id="msg-area"></div>
+            <div class="input-bar">
+                <label for="file-input" style="cursor:pointer; font-size:24px;">📎</label>
+                <input type="file" id="file-input" onchange="sendFile()">
+                <input type="text" id="m-input" placeholder="Mesaj yazın...">
+                <span onclick="sendMsg()" style="color:#075e54; cursor:pointer; font-size:24px;">➤</span>
+            </div>
         </div>
-        <div id="msg-area"></div>
-        <div class="input-bar">
-            <span onclick="askAI()" style="cursor:pointer; font-size:24px;">🤖</span>
-            <input type="text" id="m-input" placeholder="Mesaj...">
-            <span onclick="sendMsg()" style="color:#075e54; cursor:pointer; font-size:24px;">➤</span>
+
+        <div id="friends-screen" class="screen" style="padding: 20px;">
+            <h3>Dost Əlavə Et</h3>
+            <div style="display:flex; gap:10px;">
+                <input type="text" id="f-code" placeholder="Dostun kodu..." style="flex:1; padding:10px; border-radius:10px; border:1px solid #ddd;">
+                <button onclick="connect()" style="background:#075e54; color:white; border:none; padding:10px; border-radius:10px;">Bağlan</button>
+            </div>
+            <p style="margin-top:20px; color:#666;">Sizin kodunuz: <b id="my-id-display">...</b></p>
+        </div>
+
+        <div class="bottom-nav">
+            <div class="nav-item active" onclick="showScreen('chat', this)">💬<br>Mesajlar</div>
+            <div class="nav-item" onclick="showScreen('friends', this)">👥<br>Dostlar</div>
         </div>
     </div>
 
-    <div id="video-container">
-        <video id="localVideo" autoplay playsinline muted></video>
-        <video id="remoteVideo" autoplay playsinline></video>
-        <div class="controls"><button class="hang" onclick="location.reload()">Bitir</button></div>
+    <div id="call-overlay">
+        <h2 id="caller-name">Zəng gəlir...</h2>
+        <div style="display:flex;">
+            <button class="call-btn" style="background:#4cd964;" onclick="acceptCall()">Qəbul Et</button>
+            <button class="call-btn" style="background:#ff3b30;" onclick="location.reload()">Rədd Et</button>
+        </div>
+    </div>
+
+    <div id="video-ui" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#000; z-index:3000;">
+        <video id="localVideo" autoplay playsinline muted style="width:30%; position:absolute; top:20px; right:20px; border:2px solid #fff;"></video>
+        <video id="remoteVideo" autoplay playsinline style="width:100%; height:100%;"></video>
+        <button onclick="location.reload()" style="position:absolute; bottom:50px; left:50%; transform:translateX(-50%); background:red; color:white; border:none; padding:15px 40px; border-radius:30px;">Bitir</button>
     </div>
 </div>
 
@@ -71,7 +113,7 @@
     const db = getDatabase(app);
     const provider = new GoogleAuthProvider();
 
-    let user, myCode, chatId, pc, localStream;
+    let user, myCode, chatId, pc, localStream, incomingCallData;
     let startTime = Date.now();
 
     window.login = () => signInWithPopup(auth, provider);
@@ -81,18 +123,28 @@
             user = u;
             myCode = user.uid.substring(0, 6);
             document.getElementById('auth-screen').style.display = 'none';
-            document.getElementById('chat-screen').style.display = 'flex';
-            document.getElementById('h-name').innerText = user.displayName + " (" + myCode + ")";
+            document.getElementById('main-content').style.display = 'block';
+            document.getElementById('my-id-display').innerText = myCode;
             await set(ref(db, 'users/' + myCode), { n: user.displayName });
 
-            onValue(ref(db, `calls/${myCode}/offer`), async (snap) => {
+            // Zəngləri izləmə
+            onValue(ref(db, `calls/${myCode}/offer`), (snap) => {
                 const data = snap.val();
                 if (data && data.t > startTime && !pc) {
-                    if (confirm(data.n + " zəng edir. Qəbul edilsin?")) await answerCall(data);
+                    incomingCallData = data;
+                    document.getElementById('caller-name').innerText = data.n + " zəng edir...";
+                    document.getElementById('call-overlay').style.display = 'flex';
                 }
             });
         }
     });
+
+    window.showScreen = (name, el) => {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active-screen'));
+        document.getElementById(name + '-screen').classList.add('active-screen');
+        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+        el.classList.add('active');
+    };
 
     window.connect = async () => {
         const code = document.getElementById('f-code').value.trim();
@@ -104,80 +156,77 @@
                 area.innerHTML = "";
                 s.forEach(c => {
                     const d = c.val();
-                    // UNDEFINED TƏMİZLƏYİCİ
-                    if(d && d.m && d.n && d.m !== "undefined") {
-                        area.innerHTML += `<div class="msg ${d.s === user.uid ? 'sent' : 'received'}"><b>${d.n}:</b><br>${d.m}</div>`;
+                    if(d && d.m) {
+                        let content = d.m;
+                        if(d.type === 'file') {
+                            content = `📂 Fayl: <a href="${d.fileData}" download="${d.m}" class="file-link">Yüklə: ${d.m}</a>`;
+                        }
+                        area.innerHTML += `<div class="msg ${d.s === user.uid ? 'sent' : 'received'}"><b>${d.n}:</b><br>${content}</div>`;
                     }
                 });
                 area.scrollTop = area.scrollHeight;
             });
+            alert("Bağlanıldı!");
+            showScreen('chat', document.querySelector('.nav-item'));
         }
     };
 
-    window.sendMsg = (customMsg = null, sId = null, sName = null) => {
-        const m = customMsg || document.getElementById('m-input').value.trim();
-        if(!m || !chatId) return;
-        push(ref(db, 'chats/' + chatId), { s: sId || user.uid, n: sName || user.displayName, m: m });
-        if(!customMsg) document.getElementById('m-input').value = "";
+    window.sendMsg = () => {
+        const m = document.getElementById('m-input').value.trim();
+        if(m && chatId) push(ref(db, 'chats/' + chatId), { s: user.uid, n: user.displayName, m: m, type: 'text' });
+        document.getElementById('m-input').value = "";
     };
 
-    window.askAI = async () => {
-        const p = document.getElementById('m-input').value.trim();
-        if(!p) return;
-        const key = "AIzaSyAwZfDJ1GNbM108PHH9bhtRRgJ6u8PzieY";
-        try {
-            const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
-                method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({ contents: [{ parts: [{ text: p }] }] })
+    window.sendFile = () => {
+        const file = document.getElementById('file-input').files[0];
+        if(!file || !chatId) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            push(ref(db, 'chats/' + chatId), {
+                s: user.uid,
+                n: user.displayName,
+                m: file.name,
+                type: 'file',
+                fileData: e.target.result
             });
-            const d = await r.json();
-            window.sendMsg(d.candidates[0].content.parts[0].text, 'ai', 'Kor AI');
-        } catch (e) { alert("Kor AI hazırda cavab verə bilmir."); }
+        };
+        reader.readAsDataURL(file);
     };
 
-    async function initRTC() {
-        try {
-            localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-            document.getElementById('localVideo').srcObject = localStream;
-            pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
-            localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
-            pc.ontrack = (e) => document.getElementById('remoteVideo').srcObject = e.streams[0];
-            document.getElementById('video-container').style.display = 'flex';
-            return true;
-        } catch (e) { 
-            alert("Moto G14 Diqqət: Brauzer ayarlarına girib Kamera və Mikrofon icazəsini 'Həmişə icazə ver' edin."); 
-            return false; 
-        }
+    // WebRTC Zəng Funksiyaları
+    async function initMedia() {
+        localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        document.getElementById('localVideo').srcObject = localStream;
+        pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
+        localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
+        pc.ontrack = (e) => document.getElementById('remoteVideo').srcObject = e.streams[0];
+        return true;
     }
 
     window.startCall = async () => {
         const fCode = document.getElementById('f-code').value.trim();
-        if(!fCode) return alert("Əvvəlcə dost kodu yazın!");
-        if(await initRTC()) {
-            pc.onicecandidate = (e) => { if(e.candidate) push(ref(db, `calls/${fCode}/ice`), e.candidate.toJSON()); };
-            const offer = await pc.createOffer();
-            await pc.setLocalDescription(offer);
-            await set(ref(db, `calls/${fCode}/offer`), { sdp: offer.sdp, type: offer.type, n: user.displayName, t: Date.now() });
-            onValue(ref(db, `calls/${myCode}/answer`), async (snap) => {
-                if(snap.exists() && pc.signalingState !== "stable") await pc.setRemoteDescription(new RTCSessionDescription(snap.val()));
-            });
-            onChildAdded(ref(db, `calls/${myCode}/ice`), (snap) => { if(snap.exists()) pc.addIceCandidate(new RTCIceCandidate(snap.val())); });
-        }
+        if(!fCode) return alert("Dost seçilməyib!");
+        await initMedia();
+        document.getElementById('video-ui').style.display = 'block';
+        pc.onicecandidate = (e) => e.candidate && push(ref(db, `calls/${fCode}/ice`), e.candidate.toJSON());
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        await set(ref(db, `calls/${fCode}/offer`), { sdp: offer.sdp, type: offer.type, n: user.displayName, t: Date.now() });
+        onValue(ref(db, `calls/${myCode}/answer`), (s) => s.exists() && pc.setRemoteDescription(new RTCSessionDescription(s.val())));
+        onChildAdded(ref(db, `calls/${myCode}/ice`), (s) => s.exists() && pc.addIceCandidate(new RTCIceCandidate(s.val())));
     };
 
-    async function answerCall(offer) {
-        if(await initRTC()) {
-            const fCode = document.getElementById('f-code').value.trim();
-            pc.onicecandidate = (e) => { if(e.candidate) push(ref(db, `calls/${fCode}/ice`), e.candidate.toJSON()); };
-            await pc.setRemoteDescription(new RTCSessionDescription(offer));
-            const answer = await pc.createAnswer();
-            await pc.setLocalDescription(answer);
-            await set(ref(db, `calls/${fCode}/answer`), { sdp: answer.sdp, type: answer.type });
-            onChildAdded(ref(db, `calls/${myCode}/ice`), (snap) => { if(snap.exists()) pc.addIceCandidate(new RTCIceCandidate(snap.val())); });
-        }
-    }
+    window.acceptCall = async () => {
+        document.getElementById('call-overlay').style.display = 'none';
+        document.getElementById('video-ui').style.display = 'block';
+        await initMedia();
+        const fCode = document.getElementById('f-code').value.trim(); // Qeyd: Bu realda gələn datadan götürülməlidir
+        pc.onicecandidate = (e) => e.candidate && push(ref(db, `calls/${incomingCallData.from}/ice`), e.candidate.toJSON());
+        await pc.setRemoteDescription(new RTCSessionDescription(incomingCallData));
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        await set(ref(db, `calls/${incomingCallData.n}/answer`), { sdp: answer.sdp, type: answer.type });
+    };
 </script>
 </body>
-  </html>
-
+</html>
